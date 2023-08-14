@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        body {
+            width: 90vw;
+            height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #columns-rows-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        input {
+            width: 30px;
+        }
+        #container {
+            margin: 50px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        td {
+            border: solid 2px black;
+        }
+    </style>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tapestry Master</title>
+        <script type="text/javascript" src="condenseArray.js"></script>
+    </head>
+    <body>
+        <div id="columns-rows-input">
+            <label for="columns">columns:</label>
+            <input type="number" min=0 id="columns">
+            <label for="rows">rows:</label>
+            <input type="number" min=0 id="rows">
+            <button onclick="generateTable()">Generate</button>
+        </div>
+        <div id="container"></div>
+        <button onCLick="createPattern()">Create pattern</button>
+    </body>
+    <script>
+        const colorA = "blue";
+        const colorB = "orange";
+        const toggleColor = (event) => {
+            const cell = event.target;
+            const cellColor = cell["data-color"];
+            const [newColorType, newColor] = cellColor === "colorA" ? ["colorB", colorB] : ["colorA", colorA];
+            cell.style.backgroundColor = newColor;
+            cell["data-color"] = newColorType;
+        }
+        const columnsElement = document.getElementById("columns");
+        const rowsElement = document.getElementById("rows");
+        const container = document.getElementById("container");
+        const generateTable = () => {
+            container.innerHTML = "";
+            const [cols, rows] = [columnsElement.value, rowsElement.value];
+            const table = document.createElement("table");
+            for(let i = 0; i < rows; i++) {
+                const row = table.insertRow();
+                row["order"] = rows-i;
+                row["side"] = (rows - i) % 2 === 0 ? "WS" : "RS";
+                for(let j = 0; j < cols; j++) {
+                    const cell = row.insertCell();
+                    cell.className = "cell";
+                    cell["data-color"] = "colorA";
+                    cell.style.backgroundColor = colorA;
+                    cell.onclick = toggleColor;
+                }
+            }
+            container.appendChild(table);
+        }
+        // read table from the bottom up, extract cell color, reverse each second row to form a continuous pattern
+        const readTable = () => {
+            const tableData = { 0: ["ch", Number(columnsElement.value) + 1]};
+            const table = document.querySelector("table");
+            Array.from(table.rows).reverse().forEach((tr) => {
+                    const cells = Array.from(tr.cells).map((cell) => cell["data-color"]);
+                    tableData[tr.order] = {
+                        cells: tr.order % 2 === 0 ? cells : cells.reverse(),
+                        side: tr.side,
+                    }
+                });
+            console.log(tableData);
+            return tableData;
+        }
+        const createPattern = () => {
+            const tableData = readTable();
+            const instructionsDiv = document.createElement("div");
+            instructionsDiv.className = "instructions-div";
+            document.querySelector('body').appendChild(instructionsDiv);
+
+            Object.keys(tableData).forEach((rowNumber) => {
+                const row = tableData[rowNumber];
+                const paragraph = document.createElement('p');
+                instructionsDiv.appendChild(paragraph);
+                if(Number(rowNumber) === 0) {
+                    paragraph.innerHTML = `row ${rowNumber} : ${row.toString()}`;
+                } else {
+                    console.log('row.cells:');
+                    console.log(row.cells);
+                    const condensedRow = condenseArray(row.cells);
+                    paragraph.innerHTML = `row ${rowNumber} [${row.side}]: ${condensedRow.toString()}`;
+                }
+            });
+        }
+    </script>
+</html>
